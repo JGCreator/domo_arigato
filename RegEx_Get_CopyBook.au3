@@ -5,14 +5,14 @@ Date: 	08/21/13
 Description:
 	Gets a list of copybooks from any given cobol text file.
 	
-	_GetCopyBooks( Directory, File name)
+	_GetCopyBooks( [Directory[, File name]])
 
 Parameters:
-	$WorkSpaceFile:		The complete path of the workspace branch and file (including the file extension).
-						
-	$DisplayResults:	An indicator to show the array of results.
-		0 = Display
-		1 = No Display
+	$WorkSpaceFile:(optional)		The complete path of the workspace branch and file (including the file extension).
+		
+	$DisplayResults:(optional)	An indicator to show the array of results.
+			0 = Display
+			1 = No Display
 	
 Returns:
 	Success:	Array of resulting copybook names
@@ -30,10 +30,7 @@ Notes:
 
 #ce----
 
-;~ $WorkSpacePath = "jgust_view\adv1020"
-;~ $ProgramFile = "frmInvoicer.txt"
-;~ $WorkSpacePath = ""
-;~ $ProgramFile = ""
+; C:\Acucorp\workdir\jgust_view\adv1020\source\frmInvoicer.cbl
 _GetCopyBooks()
 #include <array.au3>
 Func _GetCopyBooks($WorkSpaceFile = '', $DisplayResults = 0)
