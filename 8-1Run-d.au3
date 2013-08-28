@@ -14,10 +14,9 @@ Remarks:
 $ReadSuccess = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastLogin")
 
 If $ReadSuccess <> '' Then
-	$BoxName = InputBox('Short Box Name', 'Enter the server to run against. (ex. 630-01)', _ 
-						$ReadSuccess,'', 150,130,0,892)
+	$BoxName = InputBox('Short Box Name', 'Enter the server to run against. (ex. 630-01)', $ReadSuccess,'', 150,130)
 Else	
-	$BoxName = InputBox('Short Box Name', 'Enter the server to run against.' & @lf & "(ex. 630-01)")
+	$BoxName = InputBox('Short Box Name', 'Enter the server to run against.' & @lf & "(ex. 630-01)",'','',150,130)
 EndIf
 
 if $BoxName = '' then Exit
