@@ -57,8 +57,8 @@ Func _Run8_1()
 		
 	$Split = StringSplit($BoxName, "-")
 	If $Split[0] < 2 Then 	; no delimiter found
-		ConsoleWrite('Invalid parameter. Unable to identify the box and/or site by the value given. (required delimiter = "-")' & @lf)
-		MsgBox(0, 'Invalid parameter. Unable to identify the box and/or site by the value given. (required delimiter = "-")' & @lf)
+		ConsoleWrite('Invalid parameter. Unable to identify the server and/or site by the value given. (required delimiter = "-")' & @lf)
+		MsgBox(0, 'Error:', 'Invalid parameter. Unable to identify the server and/or site by the value given. (required delimiter = "-")' & @lf)
 ;~ 		Exit
 		return 1
 	EndIf
