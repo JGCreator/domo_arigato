@@ -1,3 +1,4 @@
+#include-once
 Opt("WinTitleMatchMode", 4)	 
 ; Script Start - Add your code below here
 
@@ -14,10 +15,12 @@ Parameters:
 	Current Tab		= a numeric value to identify where the control started. [numbers might be expected to increase from left to right starting at 1]
 	
 Return Values:	(fail return code not implemented (07/29/13))
-	Success: value of CurrentTab
-	Fail: -1
+	Success: 	0 + value of CurrentTab
+	Fail:		-1 = parameter error
 	
-Remarks: 
+	
+Remarks:
+	
 	Future changes may ask the user to enter the max number of tabs to allow cyclical tabbing, meaning that if the 
 	calling function sends a right direction and the current tab = max tabs it will perform a left operation until 
 	current tab = 1.
@@ -28,23 +31,36 @@ Remarks:
 	
 #ce----
 Func _ChangeTabs($TabControl, $Direction, ByRef $CurrentTab)
-   ControlClick("", "", $TabControl)
-   ControlFocus("", "", $TabControl)
-   If $Direction = "R" Then
-	  Send("{RIGHT}")
-	  $CurrentTab += 1
-   Else
-	  If $Direction = "L" Then
-		 Send("{LEFT}")
-		 $CurrentTab -= 1
-	  Else
-	     ;Not a valid direction
-	  EndIf
-   EndIf
+	; control id must be string > space and null
+	If (Not IsString($TabControl)) Or ($TabControl = '' Or $TabControl = ' ') Then Return -1
+		
+	; direction must be either L (left) or R (right)
+	If Not $Direction = "L" And Not $Direction = "R" Then Return -1
+		
+	; current tab must be number
+	If Not IsNumber($CurrentTab) Then Return -1
+		
+		
+	; click and focus on the tab control
+	ControlClick("", "", $TabControl)
+	ControlFocus("", "", $TabControl)
+	
+	If $Direction = "R" Then
+		Send("{RIGHT}")
+		$CurrentTab += 1
+	Else
+		Send("{LEFT}")
+		$CurrentTab -= 1
+	EndIf
+	
+	Return 0
+	
 EndFunc
 
 
 #cs----
+Description: Open an Advantage program using the "hidden" dealer main text box.
+
 0 = success 
 1 = fail
 #ce----
@@ -75,7 +91,7 @@ EndFunc
 
 
 #cs----
-
+Description: Compares a given value with a given screen control
 #ce----
 Func _ValueCompare($ControlToCheck, $ValueToCheck)
    $ControlText = ControlGetText("", "", $ControlToCheck)
@@ -88,6 +104,9 @@ EndFunc
 
 
 #cs----
+Description: Waits for the window to exist (if provided), tries to activate the window, loop until button focused
+				and clicks the button.
+
 
 #ce----
 Func _ClickTheButton ( $CTB_WinTTL, $CTB_WinTxt, $CTB_BtnID, $CTB_Pause )

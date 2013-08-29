@@ -8,7 +8,7 @@ Date: 08/21/13
 
 opt('WinTitleMatchMode', 1)
 Func _Advantage_Login($UserName, $UserPassword, $Site)
-	WinWait("Advantage Login")
+	WinWait("Advantage Login", '', 2)
 	if not WinActive ("Advantage Login") Then WinActivate ("Advantage Login")
 	_EnterTheText("Advantage Login","","[CLASS:Edit; INSTANCE:1]",$UserName,.5)
 	_EnterTheText("Advantage Login","","[CLASS:Edit; INSTANCE:2]",$UserPassword,.5)
