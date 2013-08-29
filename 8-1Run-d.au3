@@ -23,12 +23,14 @@ Remarks:
 #include "./Includes/Advantage_login.au3"
 
 opt('WinTextMatchMode', 2)
+opt('TrayIconDebug', 1)
 
 $Result = 1
 
 ; loop function call until success or critical error.
 ;~ While $Result <> 2 And $Result <> 0
 While $Result <> 0
+	ConsoleWrite('calling _Run8_1()' & @LF)
 	$Result = _Run8_1()
 WEnd
 
@@ -95,29 +97,36 @@ Func _Run8_1()
 	$BoxName = 'dds' & $Split[1] & 'vmub' & $Split[2]
 
 	; call run function and check pid
+	ConsoleWrite('calling run()' & @LF)
 	$PID = run('"C:\Program Files\Acucorp\Acucbl810\AcuGT\bin\acuthin.exe" --nosplash --password nfsuser ' & $BoxName & ' -d menu')
 	If $PID = 0 and @error <> 0 Then	
 		MsgBox(0, "Unable to Launch Process", "Check that the box is valid and running, " & @lf & _
 		"and that the installation is located @:" & @lf & '"C:\Program Files\Acucorp\Acucbl810\AcuGT\bin\acuthin.exe"'
 		 ConsoleWrite("Unable to Launch Process. Check that the box is valid and running, " & @lf & _
 		"and that the installation is located @:" & @lf & '"C:\Program Files\Acucorp\Acucbl810\AcuGT\bin\acuthin.exe"'& @lf)
-	Else
-		If WinExists("ACUCOBOL-GT Debugger") Then WinActivate("ACUCOBOL-GT Debugger")
-		_ClickTheButton ( "ACUCOBOL-GT Debugger", '', "[CLASS:AcuBitButtonClass; INSTANCE:11]", .25)
 	EndIf
 
-	; look for advantage login window while checking for failed connection
-	While not WinExists("Advantage Login")
+	; look for connection fail while checking for debug window
+	ConsoleWrite('enter connection loop' & @lf)
+	While not WinExists("ACUCOBOL-GT Debugger")
 		
 		If WinExists('ACUCOBOL-GT Thin Client', 'Connection failed') Then
+			ConsoleWrite('connection failed: ' & $BoxName & @lf)
 			WinWaitClose ( "ACUCOBOL-GT Thin Client", "Connection failed")
+			ConsoleWrite('window closed' & @lf)
 			Return 1
 		EndIf
 
 	WEnd
+	
+	; activate and click the button
+	WinActivate("ACUCOBOL-GT Debugger")
+	ConsoleWrite('clicking the button' & @lf)
+	_ClickTheButton ( "ACUCOBOL-GT Debugger", '', "[CLASS:AcuBitButtonClass; INSTANCE:11]", .25)
 
 	; login window found, call the login function if parameter specified
 	If $Split[0] = 3 Then
+		ConsoleWrite('call login function')
 		_Advantage_Login("Admin", "United", $Split[3])
 		Return 0
 	EndIf
