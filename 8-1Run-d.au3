@@ -45,10 +45,10 @@ Func _Run8_1()
 
 	If $ReadSuccess <> '' Then
 		$BoxName = InputBox('Short Box Name', 'Enter the server and site (optional) to run against.' & @lf & _
-							'(ex. 630-01-01)', $ReadSuccess,'', 150,150)
+							'(ex. dds630-01-01)', $ReadSuccess,'', 150,150)
 	Else	
 		$BoxName = InputBox('Short Box Name', 'Enter the server and site (optional) to run against.' & @lf & _ 
-							"(ex. 630-01-01)",'','',150,150)
+							"(ex. dds630-01-01)",'','',150,150)
 	EndIf
 
 
@@ -65,7 +65,7 @@ Func _Run8_1()
 		return 1
 	EndIf
 
-	If Not StringIsDigit($Split[1]) Or Not StringIsDigit($Split[2]) Then
+	If Not StringIsDigit($Split[2]) Then
 		ConsoleWrite('Error: Parameter is not number' & @lf)
 		MsgBox(0, 'Error:', 'Parameter is not number' & @lf)
 ;~ 		Exit
@@ -94,7 +94,7 @@ Func _Run8_1()
 	EndIf
 
 	; string box name for call
-	$BoxName = 'dds' & $Split[1] & 'vmub' & $Split[2]
+	$BoxName = $Split[1] & 'vmub' & $Split[2]
 
 	; call run function and check pid
 	ConsoleWrite('calling run()' & @LF)
