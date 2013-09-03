@@ -110,12 +110,26 @@ Func _Run8_1()
 	ConsoleWrite('enter connection loop' & @lf)
 	While not WinExists("ACUCOBOL-GT Debugger")
 		
-		If WinExists('ACUCOBOL-GT Thin Client', 'Connection failed') Then
-			ConsoleWrite('connection failed: ' & $BoxName & @lf)
+		If WinExists('ACUCOBOL-GT Thin Client', 'Connection failed') Then 
+			$wintxt = WinGetText('ACUCOBOL-GT Thin Client')
+			$wintxt = WinGetText('Error')
+			$trimcount = StringInStr($wintxt, @lf)
+			$wintxt = StringTrimLeft($wintxt, $trimcount)
+			ConsoleWrite('Error: ' & $wintxt & @lf)
 			WinWaitClose ( "ACUCOBOL-GT Thin Client", "Connection failed")
 			ConsoleWrite('window closed' & @lf)
 			Return 1
 		EndIf
+		
+		If WinExists('Error', 'Program missing or inaccessible') Then 
+			$wintxt = WinGetText('Error')
+			$trimcount = StringInStr($wintxt, @lf)
+			$wintxt = StringTrimLeft($wintxt, $trimcount)
+			ConsoleWrite('Error: ' & $wintxt & @lf)
+			WinWaitClose ('Error', 'Program missing or inaccessible')
+			ConsoleWrite('window closed' & @lf)
+			Return 1
+		EndIf		
 
 	WEnd
 	
@@ -126,7 +140,7 @@ Func _Run8_1()
 
 	; login window found, call the login function if parameter specified
 	If $Split[0] = 3 Then
-		ConsoleWrite('call login function')
+		ConsoleWrite('call login function' & @LF)
 		_Advantage_Login("Admin", "United", $Split[3])
 		Return 0
 	EndIf
