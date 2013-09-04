@@ -31,8 +31,9 @@ Notes:
 #ce----
 
 ; C:\Acucorp\workdir\jgust_view\adv1020\source\frmInvoicer.cbl
-_GetCopyBooks()
+;~ _GetCopyBooks()
 #include <array.au3>
+#include-once
 Func _GetCopyBooks($WorkSpaceFile = '', $DisplayResults = 0)
 	
 	; if no params supplied prompt for them
