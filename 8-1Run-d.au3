@@ -18,87 +18,142 @@ Remarks:
 	If supplying a site # for login function, "Admin" and "United" are assumed for login credentials.
 
 #ce----
+#include <GUIConstantsEx.au3>
 
 #include "./Includes/CommonControlFunctions.au3"
 #include "./Includes/Advantage_login.au3"
 
 opt('WinTextMatchMode', 2)
 opt('TrayIconDebug', 1)
+opt('GUIOnEventMode',1)
 
 $Result = 1
 
 ; loop function call until success or critical error.
 ;~ While $Result <> 2 And $Result <> 0
-While $Result <> 0
-	ConsoleWrite('calling _Run8_1()' & @LF)
-	$Result = _Run8_1()
-WEnd
+;~ While $Result <> 0
+;~ 	ConsoleWrite('calling _Run8_1()' & @LF)
+;~ 	$Result = _Run8_1()
+;~ WEnd
 
-Exit
+;~ Exit
 
-
+_Run8_1()
 
 
 Func _Run8_1()
+
+	Global $Window = GUICreate("8-1Run-d",125,110)
+	
+	GUICtrlCreateLabel("Enter the server:", 10,5)
+	GUICtrlCreateLabel('Enter a site number:',10,45)
+	Global $okbutton = GUICtrlCreateButton("OK", 10,85,50,20)
+	Global $cancelbutton = GUICtrlCreateButton("Cancel",65,85,50,20)
+	Global $hENTER = GUICtrlCreateDummy()
+	dim $aAccel[1][2] 
+	$aAccel[0][0] = '{ENTER}' 
+	$aAccel[0][1] = $hENTER
+	GUISetAccelerators($aAccel)
+	
+	; look for previous success key and suggest as default
+	$ReadSuccess = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastServer")
+	If $ReadSuccess <> '' Then
+		Global $hHost = GUICtrlCreateInput($ReadSuccess,5,20,115,20)
+	Else	
+		Global $hHost = GUICtrlCreateInput('',5,20,115,20)
+	EndIf
+	GUICtrlSetTip($hHost, "ex: 630-01 or 971-2")
+	
+	
+	
+	
 	; look for previous success key and suggest as default
 	$ReadSuccess = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastLogin")
-
-	If $ReadSuccess <> '' Then
-		$BoxName = InputBox('Short Box Name', 'Enter the server and site (optional) to run against.' & @lf & _
-							'(ex. dds630-01-01)', $ReadSuccess,'', 150,150)
-	Else	
-		$BoxName = InputBox('Short Box Name', 'Enter the server and site (optional) to run against.' & @lf & _ 
-							"(ex. dds630-01-01)",'','',150,150)
+	IF $ReadSuccess <> '' Then
+		Global $hSite = GUICtrlCreateInput($ReadSuccess,5,60,115,20)
+	Else
+		Global $hSite = GUICtrlCreateInput('',5,60,115,20)
 	EndIf
-
-
-	; error catching on parameters
+	GUICtrlSetTip($hSite, "Optional to login as admin")
 	
-	; return success if user cancels
-	if $BoxName = '' then return 0
-		
-	$Split = StringSplit($BoxName, "-")
+	
+	
+	ConsoleWrite('bef enter set' & @lf)
+	GUICtrlSetOnEvent($hENTER, "_okayClicked")
+	
+	ConsoleWrite('bef ok set' & @lf)
+	GUICtrlSetOnEvent($okbutton, "_okayClicked")
+	
+	GUICtrlSetOnEvent($cancelbutton, "_cancelClicked")
+	GUISetOnEvent($GUI_EVENT_CLOSE, "_cancelClicked")
+	GUISetState(@SW_SHOW, $window)
+	ControlFocus('','',$hHost)
+	
+	while 1
+		sleep(1000)
+	WEnd
+	
+	
+EndFunc
+
+Func _okayClicked()
+	ConsoleWrite('okay clicked or enter presed' & @LF)
+	
+	$sName = ControlGetText('','',$hHost)
+	$nSite = ControlGetText('','',$hSite)
+	
+	$Split = StringSplit($sName, "-")
 	If $Split[0] < 2 Then 	; no delimiter found
 		ConsoleWrite('Invalid parameter. Unable to identify the server and/or site by the value given. (required delimiter = "-")' & @lf)
 		MsgBox(0, 'Error:', 'Invalid parameter. Unable to identify the server and/or site by the value given. (required delimiter = "-")' & @lf)
 ;~ 		Exit
 		return 1
 	EndIf
-
+	
 	If Not StringIsDigit($Split[2]) Then
 		ConsoleWrite('Error: Parameter is not number' & @lf)
 		MsgBox(0, 'Error:', 'Parameter is not number' & @lf)
 ;~ 		Exit
 		return 1
 	EndIf
-
-	If $Split[0] = 3 And Not StringIsDigit($Split[3]) Then
-		ConsoleWrite('Error: Parameter is not number')
-		MsgBox(0, 'Error:', 'Parameter is not number')
-;~ 		Exit
-		return 1
-	EndIf
-
-
+	
 	; make 2 digit instance if needed
 	if stringlen($Split[2]) < 2 Then
 		$Split[2] = '0'&$Split[2]
 	EndIf
-
+	
 	; write the check passing value to registry
-	$Write = RegWrite("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastLogin", "REG_SZ", $BoxName)
+	$Write = RegWrite("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastServer", "REG_SZ", $sName)
 	If $Write = 0 Then 
-		ConsoleWrite('An error occurred trying to open and write the key.' & @lf)
+		ConsoleWrite('An error occurred trying to open and write the server key.' & @lf)
 		MsgBox(0, 'Error:', "Can't open and write key." & @lf)
 ;~ 		Exit
 	EndIf
-
+	
+	$login = True
+	If $nSite = '' Then
+		$login = False
+	EndIf
+	
+	$nSite = Number($nSite)
+	If $nSite = 0 Or Not IsInt($nSite) Then
+		$login = False
+	EndIf
+	
+	$Write = RegWrite("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastLogin", "REG_SZ", $nSite)
+	If $Write = 0 Then 
+		ConsoleWrite('An error occurred trying to open and write the site key.' & @lf)
+		MsgBox(0, 'Error:', "Can't open and write key." & @lf)
+;~ 		Exit
+	EndIf	
+		
+	
 	; string box name for call
-	$BoxName = $Split[1] & 'vmub' & $Split[2]
-
+	$sName = $Split[1] & 'vmub' & $Split[2]
+	
 	; call run function and check pid
 	ConsoleWrite('calling run()' & @LF)
-	$PID = run('"C:\Program Files\Acucorp\Acucbl810\AcuGT\bin\acuthin.exe" --nosplash --password nfsuser ' & $BoxName & ' -d menu')
+	$PID = run('"C:\Program Files\Acucorp\Acucbl810\AcuGT\bin\acuthin.exe" --nosplash --password nfsuser ' & $sName & ' -d menu')
 	If $PID = 0 and @error <> 0 Then	
 		MsgBox(0, "Unable to Launch Process", "Check that the box is valid and running, " & @lf & _
 		"and that the installation is located @:" & @lf & '"C:\Program Files\Acucorp\Acucbl810\AcuGT\bin\acuthin.exe"'
@@ -139,11 +194,38 @@ Func _Run8_1()
 	_ClickTheButton ( "ACUCOBOL-GT Debugger", '', "[CLASS:AcuBitButtonClass; INSTANCE:11]", .25)
 
 	; login window found, call the login function if parameter specified
-	If $Split[0] = 3 Then
+	
+	If $login = True Then
 		ConsoleWrite('call login function' & @LF)
-		_Advantage_Login("Admin", "United", $Split[3])
-		Return 0
+		_Advantage_Login("Admin", "United", $nSite)
+		Return 1
 	EndIf
+	
+	ControlFocus('','',$hHost)
+EndFunc
+	; error catching on parameters
+	
+	; return success if user cancels
+;~ 	if $BoxName = '' then return 1
+;~ 		if $hHost = '' then return 1
+	
+	
 
+	
+
+;~ 	If $Split[0] = 3 And Not StringIsDigit($Split[3]) Then
+;~ 		ConsoleWrite('Error: Parameter is not number')
+;~ 		MsgBox(0, 'Error:', 'Parameter is not number')
+;~ 		Exit
+;~ 		return 1
+;~ 	EndIf
+
+
+	
+
+	
+Func _cancelClicked()
+	ConsoleWrite('exiting' & @lf)
+	Exit
 EndFunc
 	
