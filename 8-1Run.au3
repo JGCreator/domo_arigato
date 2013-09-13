@@ -19,7 +19,8 @@ Remarks:
 
 #ce----
 #include <GUIConstantsEx.au3>
-
+#include <Array.au3>
+;~ #include "./Includes/Downloads/_GetIntersection.au3"
 #include "./Includes/CommonControlFunctions.au3"
 #include "./Includes/Advantage_login.au3"
 
@@ -44,7 +45,11 @@ _Run8_1()
 
 Func _Run8_1()
 
-	Global $Window = GUICreate("8-1Run-d",125,110)	
+	Global $Window = GUICreate("8-1Run-d",125,110)
+	
+	Global $WinList1
+	Global $WinList2
+	Global $arResults
 	
 	Global $InstallDir = 'C:\Program Files\Acucorp\Acucbl810\'
 	Global $bDebug = ''
@@ -59,7 +64,7 @@ Func _Run8_1()
 	
 	; look for previous server key and suggest as default
 	$ReadSuccess = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastServer")
-	ConsoleWrite('Server key: ' & $ReadSuccess & @lf)
+	ConsoleWrite('Server key: ' & chrw(9) & $ReadSuccess & @lf)
 	If $ReadSuccess <> '' Then
 		Global $hHost = GUICtrlCreateInput($ReadSuccess,5,20,115,20)
 	Else	
@@ -70,7 +75,7 @@ Func _Run8_1()
 	
 	; look for previous site key and suggest as default
 	$ReadSuccess = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastLogin")
-	ConsoleWrite('Login key: ' & $ReadSuccess & @lf)
+	ConsoleWrite('Login key: ' & chrw(9) & $ReadSuccess & @lf)
 	IF $ReadSuccess <> '' And $ReadSuccess <> 0 Then
 		Global $hSite = GUICtrlCreateInput($ReadSuccess,5,60,50,20)
 	Else
@@ -82,7 +87,7 @@ Func _Run8_1()
 	; look for previous debug setting key and use last value
 	Global $hDebug = GUICtrlCreateCheckbox('debug', 65,60)
 	$ReadSuccess = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "DebugBool")
-	ConsoleWrite('Debug key: ' & $ReadSuccess & @lf)
+	ConsoleWrite('Debug key: ' & chrw(9) & $ReadSuccess & @lf)
 	If $ReadSuccess <> '' Then 
 		Select
 		case $ReadSuccess = 'True'
@@ -126,10 +131,20 @@ EndFunc
 
 
 
-
+;==================================================================================================
+; Function Name:   	_okayClicked()
+; Description::    	event for okay click / enter press
+;						- validate parameters
+;						- open new instance of advantage 
+;
+; Parameter(s):    	read from screen controls
+;
+; Return Value(s): 	1 - an error occurred - return to main window 
+; Note:            	- run with command prompt to produce consol logging
+; Author(s):       	josh gust (ddslive.com)
+;==================================================================================================
 Func _okayClicked()
 	ConsoleWrite('okay clicked or enter presed' & @LF)
-	
 	$sName = ControlGetText('','',$hHost)
 	$nSite = ControlGetText('','',$hSite)
 	
@@ -197,7 +212,18 @@ Func _okayClicked()
 				If $Write = 0 Then 
 					ConsoleWrite('Error:' & @lf & chrw(9) &'An error occurred trying to open and write the debug key.' & @lf)
 					MsgBox(0, 'Error:' , "Can't open and write key." & @lf)
-				EndIf	
+				EndIf
+
+				; get a 2d list of debug windows
+				$WinList1 = WinList('ACUCOBOL-GT Debugger')
+				ConsoleWrite('WinList1 0,0: ' & $WinList1[0][0] & @LF)
+				If $WinList1[0][0] = 0 then 
+					$first = True
+				Else 
+					$first = False
+					ConsoleWrite('getting handle(s) from WinList 1' & @LF)
+					$WinList1 = _ListDebugHandles($WinList1)
+				EndIf
 			Else
 				$option = ' '
 				$Write = RegWrite("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "DebugBool", "REG_SZ", 'False')
@@ -229,7 +255,7 @@ Func _okayClicked()
 
 	; look for connection fail while checking for debug / Advantage window
 	ConsoleWrite('enter connection loop' & @lf)
-
+		dim $trycount =0
 		While not WinExists("ACUCOBOL-GT Debugger") _ 
 					And Not WinExists("Advantage - ")
 		
@@ -252,12 +278,41 @@ Func _okayClicked()
 				WinWaitClose ('Error', 'Program missing or inaccessible')
 				ConsoleWrite('window closed' & @lf)
 				Return 1
-			EndIf		
+			EndIf
+			
+			$trycount +=1			
+			if $trycount > 20 then 
+				If MsgBox(4, 'Time out', 'Do you want to keep waiting?') = 6 Then
+					$trycount = 0
+				else 
+					Return 1
+				EndIf
+			EndIf
+			sleep( 250 )	
 		WEnd
 	
 	; activate and click the go button if debug used
+	dim $hWin
 	If $option = ' -d ' Then
-		WinActivate("ACUCOBOL-GT Debugger")
+		If $first = False Then
+			$WinList2 = WinList("ACUCOBOL-GT Debugger")
+			ConsoleWrite('WinList2 0,0: ' & $WinList2[0][0] & @LF)
+			ConsoleWrite('getting handle(s) from WinList 2: ' & @lf)
+			$WinList2 = _ListDebugHandles($WinList2)
+			For $i =0 To UBound($WinList2)-1
+				_ArrayBinarySearch($WinList1, $WinList2[$i])
+				If @error = 3 Then
+					$hWin = $WinList2[$i]
+					ExitLoop
+				EndIf
+			Next
+;~ 			$hWin = _callGetIntersection($WinList1, $WinList2)
+			ConsoleWrite('hWin: ' & $hWin & @LF)
+		EndIf			
+		
+		ConsoleWrite('clicking $hWin' & @lf)
+		WinActivate($hWin)	
+;~ 		WinActivate("ACUCOBOL-GT Debugger")
 		ConsoleWrite('clicking the button' & @lf)
 		_ClickTheButton ( "ACUCOBOL-GT Debugger", '', "[CLASS:AcuBitButtonClass; INSTANCE:11]", .25)
 	EndIf
@@ -267,15 +322,48 @@ Func _okayClicked()
 		WinWait('Advantage Login')
 		ConsoleWrite('call login function' & @LF)
 		_Advantage_Login("Admin", "United", $nSite)
-		Return 1
+		
 	EndIf
 	
 	; put focus back into the server box.
 	ControlFocus('','',$hHost)
+	ConsoleWrite(@lf)
+	Return 1
 EndFunc
-	
+
+;==================================================================================================
+; Function Name:   _cancelClicked()
+; Description::    exit the program when close event
+; Parameter(s):    none
+; Return Value(s): Succes	close the script
+; Note:            
+; Author(s):       josh gust (ddslive.com)
+;==================================================================================================
 Func _cancelClicked()
 	ConsoleWrite('exiting' & @lf)
 	Exit
 EndFunc
+
+;==================================================================================================
+; Function Name:   _ListDebugHandles($set)
+; Description::    Get the 1d array of handles from a 2d array of titles + handles
+;                  
+; Parameter(s):    $Set	(2D-array of title + handle returned from WinList())
+;             	   
+; Return Value(s): Succes	1D-array    $Return[$handle]
+;
+; Note:            Comparison is case-sensitiv! - i.e. Number 9 is different to string '9'!
+; Author(s):       josh gust (ddslive.com)
+;==================================================================================================
+Func _ListDebugHandles($set)
+	dim $aReturn[1]
+	For $i = 0 To UBound($set) - 1
+		$i +=1
+		ReDim $aReturn[$i]
+		$aReturn[$i-1] = $set[$i-1][1]
+		
+	Next
 	
+	Return $aReturn		
+EndFunc	
+

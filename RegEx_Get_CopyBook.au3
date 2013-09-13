@@ -8,7 +8,7 @@ Description:
 	_GetCopyBooks( [Directory[, File name]])
 
 Parameters:
-	$WorkSpaceFile:(optional)		The complete path of the workspace branch and file (including the file extension).
+	$sWorkSpaceFile:(optional)		The complete path of the workspace branch and file (including the file extension).
 		
 	$DisplayResults:(optional)	An indicator to show the array of results.
 			0 = Display
@@ -34,17 +34,21 @@ Notes:
 ;~ _GetCopyBooks()
 #include <array.au3>
 #include-once
-Func _GetCopyBooks($WorkSpaceFile = '', $DisplayResults = 0)
+
+
+Func _GetCopyBooks($sWorkSpaceFile = '', $bDisplayResults = True)
 	
-	; if no params supplied prompt for them
-	If ($WorkSpaceFile = ' ') or ($WorkSpaceFile = '') Then
-		$WorkSpaceFile = InputBox("Path to Branch", "Where is the file?" & @lf & "(include the filename + extinsion)")
-		If ($WorkSpaceFile = '') Then Exit
-	EndIf
+;~ 	If $bStandAlone <> False
+		; if no params supplied prompt for them
+;~ 		If ($sWorkSpaceFile = ' ') or ($sWorkSpaceFile = '') Then
+;~ 			$sWorkSpaceFile = InputBox("Path to Branch", "Where is the file?" & @lf & "(include the filename + extinsion)")
+			If ($sWorkSpaceFile = '') Then Exit
+;~ 		EndIf
+;~ 	EndIf
 	
 	; open the file 
 	ConsoleWrite('opening file' & @LF)
-	$SearchFile = FileOpen($WorkSpaceFile, 0)
+	$SearchFile = FileOpen($sWorkSpaceFile, 0)
 	ConsoleWrite('searchfile = ' & $searchfile & @LF)
 	If $SearchFile = -1 Then
 		ConsoleWrite("An error occurred while opening the file. Check that it exists at the location provided." & @LF)
@@ -78,7 +82,7 @@ Func _GetCopyBooks($WorkSpaceFile = '', $DisplayResults = 0)
 	$arrResults = StringRegExp( $SearchTxt, ' *?COPY *?"(.*?)"', 3, $nOffset)
 	
 	; display
-	If $DisplayResults = 0 Then
+	If $bDisplayResults = True Then
 		_ArrayDisplay($arrResults)
 	EndIf
 	
