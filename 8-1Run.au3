@@ -45,10 +45,12 @@ _Run8_1()
 
 Func _Run8_1()
 
-	Global $Window = GUICreate("8-1Run-d",125,110)
+	Global $Window = GUICreate("Run Adv",125,110)
 	
 	Global $WinList1
 	Global $WinList2
+;~ 	$WinList1[0][0] = 0
+;~ 	$WinList2[0][0] = 0
 	Global $arResults
 	
 	Global $InstallDir = 'C:\Program Files\Acucorp\Acucbl810\'
@@ -205,7 +207,7 @@ Func _okayClicked()
 		And StringInStr(filegetattrib($InstallDir),"D") Then
 			
 			; evaluate the checkbox and write reg key
-			ConsoleWrite('checking debug' & @lf)			
+			ConsoleWrite('checking debug box' & @lf)			
 			If $option = 1 Then
 				$option = ' -d '
 				$Write = RegWrite("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "DebugBool", "REG_SZ", 'True')
@@ -216,11 +218,12 @@ Func _okayClicked()
 
 				; get a 2d list of debug windows
 				$WinList1 = WinList('ACUCOBOL-GT Debugger')
-				ConsoleWrite('WinList1 0,0: ' & $WinList1[0][0] & @LF)
+				ConsoleWrite('WinList1 count: ' & $WinList1[0][0] & @LF)
 				If $WinList1[0][0] = 0 then 
 					$first = True
 				Else 
 					$first = False
+;~ 					$WinList2[0][0] = $WinList1[0][0]
 					ConsoleWrite('getting handle(s) from WinList 1' & @LF)
 					$WinList1 = _ListDebugHandles($WinList1)
 				EndIf
@@ -293,36 +296,46 @@ Func _okayClicked()
 	
 	; activate and click the go button if debug used
 	dim $hWin
+	
 	If $option = ' -d ' Then
 		If $first = False Then
-			$WinList2 = WinList("ACUCOBOL-GT Debugger")
-			ConsoleWrite('WinList2 0,0: ' & $WinList2[0][0] & @LF)
-			ConsoleWrite('getting handle(s) from WinList 2: ' & @lf)
+			; get a list of windows after the new opens
+			Do 
+				Sleep( 250 )
+				$WinList2 = WinList("ACUCOBOL-GT Debugger")
+			Until UBound($WinList2, 1) > UBound($WinList1)
+			
+			; chop the names off the 2d array to only give 1d array and handles
+			ConsoleWrite('WinList2 count: ' & $WinList2[0][0] & @LF)
+			ConsoleWrite('getting handle(s) from WinList 2' & @LF)
 			$WinList2 = _ListDebugHandles($WinList2)
+			
+			; compare list before run() to list after to find new window
 			For $i =0 To UBound($WinList2)-1
-				_ArrayBinarySearch($WinList1, $WinList2[$i])
-				If @error = 3 Then
+				_ArraySearch($WinList1, $WinList2[$i])
+				If @error = 6 Then	; value not found in array, use this one	
+					ConsoleWrite('@error: ' & @error & ' array diff found' & @LF)
 					$hWin = $WinList2[$i]
-					ExitLoop
+					ConsoleWrite('hWin: ' & $hWin & @LF)
+					$i = UBound($WinList2)-1
+					ExitLoop	; if this condition is met, then the until on the outer loop must also be met. So, this exits both loops.
+				Else
+					ConsoleWrite($WinList2[$i] & ' : not new' & @lf)
 				EndIf
 			Next
-;~ 			$hWin = _callGetIntersection($WinList1, $WinList2)
-			ConsoleWrite('hWin: ' & $hWin & @LF)
 		EndIf			
 		
 		ConsoleWrite('clicking $hWin' & @lf)
 		WinActivate($hWin)	
-;~ 		WinActivate("ACUCOBOL-GT Debugger")
 		ConsoleWrite('clicking the button' & @lf)
-		_ClickTheButton ( "ACUCOBOL-GT Debugger", '', "[CLASS:AcuBitButtonClass; INSTANCE:11]", .25)
+		_ClickTheButton ( $hWin, '', "[CLASS:AcuBitButtonClass; INSTANCE:11]", .25)
 	EndIf
 	
 	; if login parameter is true, look for the window and call the login function
 	If $login = True Then
-		WinWait('Advantage Login')
+		WinWait('Advantage Login','',1)
 		ConsoleWrite('call login function' & @LF)
 		_Advantage_Login("Admin", "United", $nSite)
-		
 	EndIf
 	
 	; put focus back into the server box.
@@ -356,11 +369,12 @@ EndFunc
 ; Author(s):       josh gust (ddslive.com)
 ;==================================================================================================
 Func _ListDebugHandles($set)
-	dim $aReturn[1]
-	For $i = 0 To UBound($set) - 1
-		$i +=1
-		ReDim $aReturn[$i]
-		$aReturn[$i-1] = $set[$i-1][1]
+	dim $aReturn[ubound($set,1)]
+;~ 	ConsoleWrite('ubound aReturn: ' & ubound($aReturn) & @LF)
+	For $i = 1 To UBound($set) -1
+;~ 		ConsoleWrite('i : ' & $i & @lf)
+		ConsoleWrite('$set '&$i&',1: ' & $set[$i][1] & @lf)
+		$aReturn[$i-1] = $set[$i][1]
 		
 	Next
 	
