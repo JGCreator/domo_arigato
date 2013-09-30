@@ -122,7 +122,7 @@ Func _ClickTheButton ( $CTB_WinTTL, $CTB_WinTxt, $CTB_BtnID, $CTB_Pause )
 			If ControlFocus ( $CTB_WinTTL, $CTB_WinTxt , $CTB_BtnID) Then
 				$CTB_Clicked = ControlClick ( $CTB_WinTTL, $CTB_WinTxt, $CTB_BtnID, 'LEFT', 1 )
 			Else
-			;unable to get control focus
+				ConsoleWrite('unable to get focus' & @lf)
 			EndIf
 		WEnd
 	EndIf

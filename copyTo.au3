@@ -12,18 +12,18 @@ Func _cpTo()
 
 	
 	
-	Global $sTitle = InputBox("Name session?", 'If you want to name this session, ' & @lf & 'enter the name in the box.' _
+	$sTitle = InputBox("Name session?", 'If you want to name this session, ' & @lf & 'enter the name in the box.' _
 							  & @lf & '(short names recommended)')
 	
 	If $sTitle <> '' Then
-		Global $Window = GUICreate($sTitle,200,130)
+		$Window = GUICreate($sTitle,200,130)
 	Else	
-		Global $Window = GUICreate("Copy to...",200,130)
+		$Window = GUICreate("Copy to...",200,130)
 	EndIf
 	
 	GUICtrlCreateLabel("Source:", 5,5)
 	GUICtrlCreateLabel('Destination:',5,45)
-	Global $stat = GUICtrlCreateLabel('',5,85,35,20)
+	
 	
 	Local $filemenu, $FileOpen
 	$filemenu = GUICtrlCreateMenu("File")
@@ -31,7 +31,7 @@ Func _cpTo()
 	$FileDest = GUICtrlCreateMenuItem("Dest...", $filemenu)
 	
 	; start the dialog from reg value saved
-	Global $Sourcepath = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\CPto", "LastSourceDir")
+	$Sourcepath = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\CPto", "LastSourceDir")
 	if $Sourcepath <> '' then
 		Global $hSource = GUICtrlCreateInput($Sourcepath ,5,20,190,20)
 	Else
@@ -41,7 +41,7 @@ Func _cpTo()
 
 
 	; start the dialog from reg value saved
-	Global $Destpath = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\CPto", "LastDestDir")
+	$Destpath = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\CPto", "LastDestDir")
 	if $Destpath <> '' then
 		Global $hDest = GUICtrlCreateInput($Destpath,5,60,190,20)
 	Else
@@ -50,11 +50,11 @@ Func _cpTo()
 	GUICtrlSetTip($hDest, "Destination for copy paste")
 	
 	
-	Global $okbutton = GUICtrlCreateButton("Go", 50,85,100,20)
+	$okbutton = GUICtrlCreateButton("Go", 50,85,100,20)
 ;~ 	Global $cancelbutton = GUICtrlCreateButton("Cancel",65,85,50,20)
 	
-	Global $hENTER = GUICtrlCreateDummy()
-	Global $hEsc = GUICtrlCreateDummy()
+	$hENTER = GUICtrlCreateDummy()
+	$hEsc = GUICtrlCreateDummy()
 	dim $aAccel[2][2] 
 	$aAccel[0][0] = '{ENTER}' 
 	$aAccel[0][1] = $hENTER
@@ -86,35 +86,39 @@ Func _exit()
 EndFunc
 
 Func _openSource()
+	$Sourcepath = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\CPto", "LastSourceDir")
+	ConsoleWrite($sourcepath & @lf)
 	
-				
 	; open the dialog
 	If $Sourcepath <> '' Then
-		$Sourcefile = FileOpenDialog("Choose file...", $Sourcepath, "All (*.*)")
+		$Sourcefile = FileOpenDialog("Choose file...", $Sourcepath, "All (*.*)", 10)
 	Else
-		$Sourcefile = FileOpenDialog("Choose file...", 'C:\', "All (*.*)")
+		$Sourcefile = FileOpenDialog("Choose file...", 'C:\', "All (*.*)", 10)
 	EndIf
 				
 	; when successful
-	ControlSetText ( "", "", $hSource, $Sourcefile )	
+	ControlSetText ( "", "", $hSource, $Sourcefile )
+	$sourcefile = ''
 	
 EndFunc
 
 Func _openDest()
-	
-				
+	$Destpath = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\CPto", "LastDestDir")
+	ConsoleWrite($Destpath & @lf)			
 	; open the dialog
 	If $Destpath <> '' Then
-		$Destfile = FileOpenDialog("Choose file...", $Destpath, "All (*.*)")
+		$Destfile = FileOpenDialog("Choose file...", $Destpath, "All (*.*)", 10)
 	Else
-		$Destfile = FileOpenDialog("Choose file...", 'C:\', "All (*.*)")
+		$Destfile = FileOpenDialog("Choose file...", 'C:\', "All (*.*)", 10)
 	EndIf
 				
 	; when successful
 	ControlSetText ( "", "", $hDest, $Destfile )
+	$destfile = ''
 EndFunc
 
 Func _GoClicked()
+	$stat = GUICtrlCreateLabel('',5,85,35,20)
 	$source = ControlGetText('','',$hSource)
 	$dest = ControlGetText('','',$hDest)
 	RegWrite("HKEY_CURRENT_USER\SOFTWARE\USERDEF\CPto", "LastSourceDir", "REG_SZ", $source)
