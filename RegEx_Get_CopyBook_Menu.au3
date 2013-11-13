@@ -1,6 +1,7 @@
 #Include <GuiMenu.au3>
 #include <GUIConstantsEx.au3>
-
+#include <GuiComboBox.au3>
+#include <GUIConstantsEx.au3>
 #include <Array.au3>
 ;~ #include 'RegEx_Get_CopyBook.au3'
 
@@ -16,7 +17,7 @@ Func _Main()
 	Local $msg, $file
 	#forceref $separator1
 
-	$Window = GUICreate("GUI menu", 300, 120)
+	$Window = GUICreate("GUI menu", 300, 220) ; 120)
 	GUICtrlCreateLabel('Enter or select from File/Open...' & @lf & 'the location of the file you wish to search.',10,5)
 	
 	Dim $arRecent[1]
@@ -25,6 +26,9 @@ Func _Main()
 	
 	; input box
 	$txtbx = GUICtrlCreateInput('',10,45,280,20)
+	
+	; combo box
+	$hcb_Clients = _GuiCtrlComboBox_Create($Window,"one|two|three",10,125,200,20)
 	; buttons
 	$okbutton = GUICtrlCreateButton("OK", 50, 75, 70, 20)
 	$cancelbutton = GUICtrlCreateButton("Cancel", 180, 75, 70, 20)
@@ -133,7 +137,7 @@ GUISetState()
 				If $index <> -1 Then
 					ControlSetText ( "", "", $txtbx, $arValues[$index] )
 				EndIf
-				ConsoleWrite($msg)
+				ConsoleWrite($msg & @LF)
 				
 
 		EndSelect

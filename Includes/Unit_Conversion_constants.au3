@@ -49,9 +49,10 @@ $h_dealer_pack = 'Edit22'
 ;~ $h_void = ''
 ;~ $h_approved = ''
 $h_trans_desc = 'Edit102'
-$h_grid = 'Afx:60300000:b5'
-$h_col1 = '48'	; click coordinates
-$h_row2 = '47' 	
+;~ $h_grid = 'Afx:60300000:b5'
+$h_grid = 'SPR32X60_SpreadSheet5'
+$h_col1 = '47' 	; click coordinates
+$h_row2 = '48'	
 
 
 ; General Buttons

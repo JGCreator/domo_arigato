@@ -19,6 +19,7 @@ Remarks:
 
 #ce----
 #include <GUIConstantsEx.au3>
+#include <GuiComboBox.au3>
 #include <Array.au3>
 ;~ #include "./Includes/Downloads/_GetIntersection.au3"
 #include "./Includes/CommonControlFunctions.au3"
@@ -64,16 +65,35 @@ Func _Run8_1()
 	; set check status of options according to key(s) value.
 	; change operation according to key(s) value.
 	
+
+   ; check for ...\Program Files\8-1Run\serverList.txt exists
+   If FileExists(@ProgramFilesDir & "\8-1Run\serverList.txt") Then
+	  ; true, use file to populate the combobox
+	  Global $hSvrFile = FileOpen(@ProgramFilesDir & "\8-1Run\serverList.txt")
+	  $txt = ''
+	  While 1
+		 $txt &= FileReadLine($hSvrFile) & "|"
+		 If @error = -1 Then 
+			$txt = StringTrimRight($txt,2)
+			ExitLoop
+		 EndIf
+	  WEnd	  
+	  Global $hHost = _GUICtrlComboBox_Create($Window,$txt,5,20,115,20)
+   Else
+	  ; false, assume the dir doesn't exist either and create both
+	  DirCreate(@ProgramFilesDir & "\8-1Run\")
+	  Global $hSvrFile = FileOpen(@ProgramFilesDir & "\8-1Run\serverList.txt",1)
+	  Global $hHost = _GUICtrlComboBox_Create($Window,'',5,20,115,20)
+   EndIf
+   FileClose($hSvrFile)
+   
 	; look for previous server key and suggest as default
 	$ReadSuccess = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastServer")
 	ConsoleWrite('Server key: ' & chrw(9) & $ReadSuccess & @lf)
-	If $ReadSuccess <> '' Then
-		Global $hHost = GUICtrlCreateInput($ReadSuccess,5,20,115,20)
-	Else	
-		Global $hHost = GUICtrlCreateInput('',5,20,115,20)
-	EndIf
-	GUICtrlSetTip($hHost, "ex: dds630-01 or dds971-2")
-	
+   If $ReadSuccess <> '' Then
+	  _GUICtrlComboBox_SetEditText($hHost,$ReadSuccess)		
+   EndIf
+   
 	
 	; look for previous site key and suggest as default
 	$ReadSuccess = RegRead("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastLogin")
@@ -150,34 +170,6 @@ Func _okayClicked()
 	$sName = ControlGetText('','',$hHost)
 	$nSite = ControlGetText('','',$hSite)
 	
-	$Split = StringSplit($sName, "-")
-	If $Split[0] < 2 Then 	; no delimiter found
-		ConsoleWrite('Error:' & @lf & chrw(9) & 'Invalid parameter. Unable to identify the server by the value given. (ex: dds630-1)' & @lf)
-		MsgBox(0, 'Error:', 'Invalid parameter. Unable to identify the server and/or site by the value given. (required delimiter = "-")' & @lf)
-;~ 		Exit
-		return 1
-	EndIf
-	
-	If Not StringIsDigit($Split[2]) Then
-		ConsoleWrite('Error:' & @lf & chrw(9) & 'Parameter is not number' & @lf)
-		MsgBox(0, 'Error:', 'Parameter is not number' & @lf)
-;~ 		Exit
-		return 1
-	EndIf
-	
-	; make 2 digit instance if needed
-	if stringlen($Split[2]) < 2 Then
-		$Split[2] = '0'&$Split[2]
-	EndIf
-	
-	; write the check passing value to registry
-	$Write = RegWrite("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastServer", "REG_SZ", $sName)
-	If $Write = 0 Then 
-		ConsoleWrite('Error:' & @lf & chrw(9) & 'An error occurred trying to open and write the server key.' & @lf)
-		MsgBox(0, 'Error:', "Can't open and write key." & @lf)
-;~ 		Exit
-	EndIf
-	
 	; validate site parameter and set boolean value
 	$login = True
 	If $nSite = '' Then
@@ -195,9 +187,6 @@ Func _okayClicked()
 		EndIf
 	EndIf
 	
-	
-	; string box name for call
-	$sName = $Split[1] & 'vmub' & $Split[2]
 	; define var for -d option
 	$option = GUICtrlRead($hDebug)
 	
@@ -247,6 +236,16 @@ Func _okayClicked()
 							"Unable to Launch Process. Check that the box is valid and running, " & @lf & chrw(9) & _
 							"and that the installation is located @:" & @lf & chrw(9) & - 
 							'"C:\Program Files\Acucorp\Acucbl810\AcuGT\bin\acuthin.exe"'& @lf)
+			Else
+			   ; write the check passing value to registry | only write after successful run
+			   $Write = RegWrite("HKEY_CURRENT_USER\SOFTWARE\USERDEF\AcuOpen", "LastServer", "REG_SZ", $sName)
+			   If $Write = 0 Then 
+				  ConsoleWrite('Error:' & @lf & chrw(9) & 'An error occurred trying to open and write the server key.' & @lf)
+				  MsgBox(0, 'Error:', "Can't open and write key." & @lf)
+			   EndIf
+
+			   ; check the server file and write new line if needed
+			   ; ...
 			EndIf
 	Else
 		MsgBox(0,'Acu 8.1 Not Found','This script requires an installation of Acucbl810 in C:\Program Files\Acucorp')
@@ -284,7 +283,7 @@ Func _okayClicked()
 			EndIf
 			
 			$trycount +=1			
-			if $trycount > 20 then 
+			if $trycount > 60 then 
 				If MsgBox(4, 'Time out', 'Do you want to keep waiting?') = 6 Then
 					$trycount = 0
 				else 
