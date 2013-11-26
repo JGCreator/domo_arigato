@@ -317,9 +317,16 @@ Func _createUnit($array = '')
 	
 	; populate the unit vin, and check for validation (errors)
    sleep(100)
+   $count = 1
    do 
 	  ControlFocus($h_AcuWin,'', $h_vin)
 	  $focus = ControlGetFocus($h_AcuWin)
+	  
+	  sleep(250)
+	  If $count = 20 Then
+		 _ErrorCorrection("Waiting for Focus", "Vin Entry Field Needs Focus.")
+	  EndIf
+	  $count+=1
    Until $focus = $h_vin
    _SendTab($arValue[3],.25)
    _SendTab( '{TAB}', 2 )
@@ -375,25 +382,30 @@ Func _createUnit($array = '')
 	
 	; put focus on the transaction description and tab to grid
 	ConsoleWrite('waiting for focus on transaction description' & @lf)
+	$count = 1
 	Do
 		ControlFocus($h_AcuWin,'',$h_trans_desc)
 		$focus = ControlGetFocus($h_AcuWin)
-;~ 		sleep(100)
+		 sleep(250)
+		 If $count = 20 Then
+			_ErrorCorrection("Waiting for Focus", "Transaction Description Needs Focus.")
+		 EndIf
+		 $count+=1
 	Until $focus = $h_trans_desc
 	
    If ControlFocus($h_AcuWin,'', $h_trans_desc) Then
 	  _SendTab('{TAB 2}',.15)
 	  _SendTab('{DOWN}',.15)
 			
-	  $count = 0
-	  ConsoleWrite('clearing accounting grid (rows >= 2)' & @lf)
-	  Do
-		 _SendTab('^c',.05)
-		 $clip = ClipGet()
-		 _SendTab('{SPACE}',.15)
-		 _SendTab('{TAB}',.15)
-		 _SendTab('+{TAB}',.15)
-	  Until $clip = ' '
+;~ 	  $count = 0
+;~ 	  ConsoleWrite('clearing accounting grid (rows >= 2)' & @lf)
+;~ 	  Do
+;~ 		 _SendTab('^c',.05)
+;~ 		 $clip = ClipGet()
+;~ 		 _SendTab('{SPACE}',.15)
+;~ 		 _SendTab('{TAB}',.15)
+;~ 		 _SendTab('+{TAB}',.15)
+;~ 	  Until $clip = ' '
 		 
 	  _SendTab($arValue[5],.25)
 	  _SendTab('{TAB 3}',.25)
@@ -408,8 +420,16 @@ Func _createUnit($array = '')
 	ControlClick($h_AcuWin,'',$h_save_new)
 	ConsoleWrite('waiting for unit number focus' & @lf)
 	Do
-		$focus = ControlgetFocus($h_AcuWin)
-;~ 		sleep( 250 )
+		 ; look for invalid account error after clicking save and new
+		 $focus = ControlgetFocus($h_AcuWin)
+		 sleep( 250 )
+		 $stat = WinGetText($h_AcuWin)
+		 $stat = StringInStr($stat, 'Invalid Account')
+		 If $stat <> 0 Then		; error message found
+			$stat = _ErrorCorrection("Invalid Account Found", _
+						   'An "Invalid Account" message was found.')
+			ControlClick($h_AcuWin,'',$h_save_new) ; assume user corrected error, click save and new again
+		 EndIf
 	Until $focus = $h_unit_nbr
 	
 	
@@ -497,6 +517,15 @@ Func _clearList()
    FileClose($AgentsOfChaos)
 	 
 	 
+EndFunc
+  
+Func _ErrorCorrection($title = 'Error Correction Needed', $message = '')
+   BlockInput(0)
+   $click = MsgBox(262144,$title,'An error has been detected.' &@lf& _
+				  'Please correct the error and click ok to resume.' &@lf& _
+				  $message)
+   BlockInput(1)
+   Return $click   
 EndFunc
 
 Func _whatThe()
